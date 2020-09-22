@@ -1,0 +1,61 @@
+---
+title: "Banking_ML"
+author: "Gagan Gayari"
+date: "24/06/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+
+
+```{r cars}
+setwd('F:/pdf e-reading/Mtech/2nd semester/Data visualisation lab/Temporal_chart/New folder')
+
+library(dplyr)
+library(sf)
+library(ggplot2)
+
+covid_data<-read.csv('covid19-in-india_1/covid_19_india.csv',stringsAsFactors = FALSE)
+# View(covid_data)
+covid_data$Date<-as.Date(covid_data$Date,format="%d/%m/%y")
+
+
+##Creating a dataframe of covid19 cases of the latest data
+
+latest_date<-max(covid_data$Date)
+
+present_cases<-covid_data%>%filter(covid_data$Date==latest_date)
+present_cases<-data.frame(State=present_cases$State.UnionTerritory,Total_cases=present_cases$Confirmed,stringsAsFactors = FALSE)
+
+##Matching some of the state names in the "present_cases" with the names present in the shape file.
+
+present_cases$State[present_cases$State=="Andaman and Nicobar Islands"]<-"Andaman and Nicobar"
+present_cases$State[present_cases$State=="Odisha"]<-"Orissa"
+present_cases$State[present_cases$State=="Uttarakhand"]<-"Uttaranchal"
+present_cases$State[present_cases$State=="Dadar Nagar Haveli"]<-"Dadra and Nagar Haveli"
+present_cases$State[present_cases$State=="Telengana"]<-"Telangana"
+
+
+##Reading the shape file and plotting.
+
+shape_file<-st_read("F:/pdf e-reading/Mtech/2nd semester/Data visualisation lab/Temporal_chart/New folder/Shapefiles/Shapefiles/India.shp")
+## Reading layer `India' from data source `F:\pdf e-reading\Mtech\2nd semester\Data visualisation lab\Temporal_chart\New folder\Shapefiles\Shapefiles\India.shp' using driver `ESRI Shapefile'
+## Simple feature collection with 36 features and 6 fields
+## geometry type:  MULTIPOLYGON
+## dimension:      XY
+## bbox:           xmin: 68.18625 ymin: 6.754256 xmax: 97.41516 ymax: 37.07827
+## geographic CRS: WGS 84
+combined_data<-left_join(shape_file,present_cases,by=c("NAME_1"="State"))
+combined_data[is.na(combined_data)]<-0
+
+
+ggplot(combined_data)+geom_sf(aes(fill=Total_cases))+scale_fill_gradient(low = "white",high = "red")+ggtitle("Covid19 cases in India",subtitle = paste("As on",as.character(latest_date)))
+
+
+
+```
